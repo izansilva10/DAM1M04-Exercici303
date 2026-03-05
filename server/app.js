@@ -266,6 +266,25 @@ app.get('/movie/:id', async (req, res) => {
   }
 });
 
+// Esborrar una pel·lícula
+app.post('/movie/delete/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+
+    // Primer esborrem les relacions amb actors (film_actor)
+    await db.query('DELETE FROM film_actor WHERE film_id = ?', [filmId]);
+
+    // Després esborrem la pel·lícula
+    await db.query('DELETE FROM film WHERE film_id = ?', [filmId]);
+
+    // Redirigir a la llista de pel·lícules
+    res.redirect('/movies');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error en esborrar la pel·lícula');
+  }
+});
+
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await db.end();
