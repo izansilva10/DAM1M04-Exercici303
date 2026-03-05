@@ -112,8 +112,7 @@ a:active {
   object-fit: cover;
   border-radius: 4px;
 }
-/* Añadir a estils.css */
-
+/
 .no-poster-small {
   width: 60px;
   height: 80px;
@@ -124,4 +123,43 @@ a:active {
   font-size: 2rem;
   border-radius: 4px;
   color: #999;
+}
+
+.movie-form {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
 }
