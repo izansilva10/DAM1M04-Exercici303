@@ -17,7 +17,7 @@ if (!isProxmox) {
     host: '127.0.0.1',
     port: 3306,
     user: 'root',
-    password: 'A-038012-o',
+    password: 'A-038012-o', // La teva contrasenya local
     database: 'sakila'
   });
 } else {
@@ -54,12 +54,11 @@ hbs.registerHelper('gt', (a, b) => a > b);
 // Partials
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
-// ---------- RUTAS ----------
+// ---------- RUTES EXISTENTS (PRÀCTICA 302) ----------
 
-// Página principal: 5 películas + 5 categorías
+// Pàgina principal: 5 pel·lícules + 5 categories
 app.get('/', async (req, res) => {
   try {
-    // 5 primeras películas con título, año, carátula y actores
     const moviesRows = await db.query(`
       SELECT f.film_id, f.title, f.release_year, 
              GROUP_CONCAT(CONCAT(a.first_name, ' ', a.last_name) SEPARATOR ', ') AS actors
@@ -71,7 +70,6 @@ app.get('/', async (req, res) => {
       LIMIT 5
     `);
 
-    // 5 primeras categorías
     const categoriesRows = await db.query(`
       SELECT category_id, name 
       FROM category 
@@ -79,7 +77,6 @@ app.get('/', async (req, res) => {
       LIMIT 5
     `);
 
-    // Convertir a JSON
     const movies = db.table_to_json(moviesRows, {
       film_id: 'number',
       title: 'string',
@@ -92,7 +89,6 @@ app.get('/', async (req, res) => {
       name: 'string'
     });
 
-    // Datos comunes
     const commonData = JSON.parse(
       fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
     );
@@ -109,7 +105,7 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Página de películas: 15 películas con actores
+// Pàgina de pel·lícules: 15 pel·lícules amb actors
 app.get('/movies', async (req, res) => {
   try {
     const moviesRows = await db.query(`
@@ -148,10 +144,9 @@ app.get('/movies', async (req, res) => {
   }
 });
 
-// Página de clientes: 25 primeros + 5 rentals cada uno
+// Pàgina de clients: 25 primers + 5 lloguers cada un
 app.get('/customers', async (req, res) => {
   try {
-    // 25 primeros clientes
     const customersRows = await db.query(`
       SELECT customer_id, first_name, last_name, email
       FROM customer
@@ -166,7 +161,6 @@ app.get('/customers', async (req, res) => {
       email: 'string'
     });
 
-    // Para cada cliente, obtener sus 5 últimos rentals
     for (let customer of customers) {
       const rentalsRows = await db.query(`
         SELECT r.rental_id, r.rental_date, f.title
@@ -200,19 +194,13 @@ app.get('/customers', async (req, res) => {
   }
 });
 
-// Iniciar servidor
-const httpServer = app.listen(port, () => {
-  console.log(`http://localhost:${port}`);
-  console.log(`http://localhost:${port}/movies`);
-  console.log(`http://localhost:${port}/customers`);
-});
+// ---------- NOVES RUTES (PRÀCTICA 303) ----------
 
-// Pàgina de detall d'una pel·lícula
+// Pàgina de detall d'una pel·lícula (GET /movie/:id)
 app.get('/movie/:id', async (req, res) => {
   try {
     const filmId = req.params.id;
 
-    // Obtenir les dades de la pel·lícula
     const filmRows = await db.query(`
       SELECT film_id, title, description, release_year, rental_rate, length,
              (SELECT name FROM language WHERE language_id = film.language_id) AS language
@@ -224,7 +212,6 @@ app.get('/movie/:id', async (req, res) => {
       return res.status(404).send('Pel·lícula no trobada');
     }
 
-    // Obtenir els actors de la pel·lícula
     const actorsRows = await db.query(`
       SELECT a.first_name, a.last_name
       FROM actor a
@@ -233,7 +220,6 @@ app.get('/movie/:id', async (req, res) => {
       ORDER BY a.last_name, a.first_name
     `, [filmId]);
 
-    // Transformar les dades a JSON
     const film = db.table_to_json(filmRows, {
       film_id: 'number',
       title: 'string',
@@ -249,7 +235,6 @@ app.get('/movie/:id', async (req, res) => {
       last_name: 'string'
     });
 
-    // Dades comunes
     const commonData = JSON.parse(
       fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
     );
@@ -266,23 +251,161 @@ app.get('/movie/:id', async (req, res) => {
   }
 });
 
-// Esborrar una pel·lícula
+// Formulari per afegir una nova pel·lícula (GET /movie/add)
+app.get('/movie/add', async (req, res) => {
+  try {
+    // Necessitem la llista d'idiomes per al selector
+    const languagesRows = await db.query('SELECT language_id, name FROM language ORDER BY name');
+    const languages = db.table_to_json(languagesRows, { language_id: 'number', name: 'string' });
+
+    const commonData = JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
+    );
+
+    res.render('movieAdd', {
+      languages,
+      common: commonData
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error carregant el formulari');
+  }
+});
+
+// Processar el formulari d'afegir pel·lícula (POST /movie/add)
+app.post('/movie/add', async (req, res) => {
+  try {
+    const { title, description, release_year, rental_rate, length, language_id } = req.body;
+
+    // Validació bàsica
+    if (!title || !release_year || !rental_rate || !length || !language_id) {
+      return res.status(400).send('Falten camps obligatoris');
+    }
+
+    // Inserir a la taula film
+    const result = await db.query(`
+      INSERT INTO film (title, description, release_year, rental_rate, length, language_id, last_update)
+      VALUES (?, ?, ?, ?, ?, ?, NOW())
+    `, [title, description, release_year, rental_rate, length, language_id]);
+
+    // Redirigir a la llista de pel·lícules
+    res.redirect('/movies');
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error en afegir la pel·lícula');
+  }
+});
+
+// Formulari per editar una pel·lícula (GET /movie/edit/:id)
+app.get('/movie/edit/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+
+    // Obtenir dades de la pel·lícula
+    const filmRows = await db.query(`
+      SELECT film_id, title, description, release_year, rental_rate, length, language_id
+      FROM film
+      WHERE film_id = ?
+    `, [filmId]);
+
+    if (filmRows.length === 0) {
+      return res.status(404).send('Pel·lícula no trobada');
+    }
+
+    const film = db.table_to_json(filmRows, {
+      film_id: 'number',
+      title: 'string',
+      description: 'string',
+      release_year: 'number',
+      rental_rate: 'number',
+      length: 'number',
+      language_id: 'number'
+    })[0];
+
+    // Llista d'idiomes per al selector
+    const languagesRows = await db.query('SELECT language_id, name FROM language ORDER BY name');
+    const languages = db.table_to_json(languagesRows, { language_id: 'number', name: 'string' });
+
+    const commonData = JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
+    );
+
+    res.render('movieEdit', {
+      film,
+      languages,
+      common: commonData
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error carregant el formulari d\'edició');
+  }
+});
+
+// Processar l'edició d'una pel·lícula (POST /movie/edit/:id)
+app.post('/movie/edit/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+    const { title, description, release_year, rental_rate, length, language_id } = req.body;
+
+    // Validació bàsica
+    if (!title || !release_year || !rental_rate || !length || !language_id) {
+      return res.status(400).send('Falten camps obligatoris');
+    }
+
+    // Actualitzar la taula film
+    await db.query(`
+      UPDATE film
+      SET title = ?, description = ?, release_year = ?, rental_rate = ?, length = ?, language_id = ?, last_update = NOW()
+      WHERE film_id = ?
+    `, [title, description, release_year, rental_rate, length, language_id, filmId]);
+
+    // Redirigir a la pàgina de detall de la pel·lícula
+    res.redirect(`/movie/${filmId}`);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error en editar la pel·lícula');
+  }
+});
+
+// Eliminar una pel·lícula (POST /movie/delete/:id)
 app.post('/movie/delete/:id', async (req, res) => {
   try {
     const filmId = req.params.id;
 
-    // Primer esborrem les relacions amb actors (film_actor)
+    // Eliminar dependències en ordre
+    // 1. Eliminar de film_actor
     await db.query('DELETE FROM film_actor WHERE film_id = ?', [filmId]);
 
-    // Després esborrem la pel·lícula
+    // 2. Eliminar de film_category
+    await db.query('DELETE FROM film_category WHERE film_id = ?', [filmId]);
+
+    // 3. Eliminar de inventory i rental
+    const inventories = await db.query('SELECT inventory_id FROM inventory WHERE film_id = ?', [filmId]);
+    for (let inv of inventories) {
+      await db.query('DELETE FROM rental WHERE inventory_id = ?', [inv.inventory_id]);
+    }
+    await db.query('DELETE FROM inventory WHERE film_id = ?', [filmId]);
+
+    // 4. Finalment, eliminar la pel·lícula
     await db.query('DELETE FROM film WHERE film_id = ?', [filmId]);
 
-    // Redirigir a la llista de pel·lícules
     res.redirect('/movies');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error en esborrar la pel·lícula');
   }
+});
+
+// Iniciar servidor
+const httpServer = app.listen(port, () => {
+  console.log(`http://localhost:${port}`);
+  console.log(`http://localhost:${port}/movies`);
+  console.log(`http://localhost:${port}/customers`);
+  console.log(`http://localhost:${port}/movie/add`); // Nova ruta
 });
 
 // Graceful shutdown
