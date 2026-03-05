@@ -207,6 +207,65 @@ const httpServer = app.listen(port, () => {
   console.log(`http://localhost:${port}/customers`);
 });
 
+// Pàgina de detall d'una pel·lícula
+app.get('/movie/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+
+    // Obtenir les dades de la pel·lícula
+    const filmRows = await db.query(`
+      SELECT film_id, title, description, release_year, rental_rate, length,
+             (SELECT name FROM language WHERE language_id = film.language_id) AS language
+      FROM film
+      WHERE film_id = ?
+    `, [filmId]);
+
+    if (filmRows.length === 0) {
+      return res.status(404).send('Pel·lícula no trobada');
+    }
+
+    // Obtenir els actors de la pel·lícula
+    const actorsRows = await db.query(`
+      SELECT a.first_name, a.last_name
+      FROM actor a
+      JOIN film_actor fa ON a.actor_id = fa.actor_id
+      WHERE fa.film_id = ?
+      ORDER BY a.last_name, a.first_name
+    `, [filmId]);
+
+    // Transformar les dades a JSON
+    const film = db.table_to_json(filmRows, {
+      film_id: 'number',
+      title: 'string',
+      description: 'string',
+      release_year: 'number',
+      rental_rate: 'number',
+      length: 'number',
+      language: 'string'
+    })[0];
+
+    const actors = db.table_to_json(actorsRows, {
+      first_name: 'string',
+      last_name: 'string'
+    });
+
+    // Dades comunes
+    const commonData = JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
+    );
+
+    res.render('movie', {
+      film,
+      actors,
+      common: commonData
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error consultant la base de dades');
+  }
+});
+
 // Graceful shutdown
 process.on('SIGINT', async () => {
   await db.end();
