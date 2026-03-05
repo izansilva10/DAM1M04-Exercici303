@@ -17,7 +17,7 @@ if (!isProxmox) {
     host: '127.0.0.1',
     port: 3306,
     user: 'root',
-    password: 'A-038012-o', // La teva contrasenya local
+    password: 'A-038012-o',
     database: 'sakila'
   });
 } else {
@@ -56,7 +56,6 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
 // ---------- RUTES EXISTENTS (PRÀCTICA 302) ----------
 
-// Pàgina principal: 5 pel·lícules + 5 categories
 app.get('/', async (req, res) => {
   try {
     const moviesRows = await db.query(`
@@ -105,7 +104,6 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Pàgina de pel·lícules: 15 pel·lícules amb actors
 app.get('/movies', async (req, res) => {
   try {
     const moviesRows = await db.query(`
@@ -144,7 +142,6 @@ app.get('/movies', async (req, res) => {
   }
 });
 
-// Pàgina de clients: 25 primers + 5 lloguers cada un
 app.get('/customers', async (req, res) => {
   try {
     const customersRows = await db.query(`
@@ -195,8 +192,144 @@ app.get('/customers', async (req, res) => {
 });
 
 // ---------- NOVES RUTES (PRÀCTICA 303) ----------
+// PRIMER les rutes fixes, DESPRÉS les dinàmiques (amb :id)
 
-// Pàgina de detall d'una pel·lícula (GET /movie/:id)
+// Formulari per afegir una nova pel·lícula (GET /movie/add)
+app.get('/movie/add', async (req, res) => {
+  try {
+    const languagesRows = await db.query('SELECT language_id, name FROM language ORDER BY name');
+    const languages = db.table_to_json(languagesRows, { language_id: 'number', name: 'string' });
+
+    const commonData = JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
+    );
+
+    res.render('movieAdd', {
+      languages,
+      common: commonData
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error carregant el formulari');
+  }
+});
+
+// Processar el formulari d'afegir pel·lícula (POST /movie/add)
+app.post('/movie/add', async (req, res) => {
+  try {
+    const { title, description, release_year, rental_rate, length, language_id } = req.body;
+
+    if (!title || !release_year || !rental_rate || !length || !language_id) {
+      return res.status(400).send('Falten camps obligatoris');
+    }
+
+    await db.query(`
+      INSERT INTO film (title, description, release_year, rental_rate, length, language_id, last_update)
+      VALUES (?, ?, ?, ?, ?, ?, NOW())
+    `, [title, description, release_year, rental_rate, length, language_id]);
+
+    res.redirect('/movies');
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error en afegir la pel·lícula');
+  }
+});
+
+// Formulari per editar una pel·lícula (GET /movie/edit/:id)
+app.get('/movie/edit/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+
+    const filmRows = await db.query(`
+      SELECT film_id, title, description, release_year, rental_rate, length, language_id
+      FROM film
+      WHERE film_id = ?
+    `, [filmId]);
+
+    if (filmRows.length === 0) {
+      return res.status(404).send('Pel·lícula no trobada');
+    }
+
+    const film = db.table_to_json(filmRows, {
+      film_id: 'number',
+      title: 'string',
+      description: 'string',
+      release_year: 'number',
+      rental_rate: 'number',
+      length: 'number',
+      language_id: 'number'
+    })[0];
+
+    const languagesRows = await db.query('SELECT language_id, name FROM language ORDER BY name');
+    const languages = db.table_to_json(languagesRows, { language_id: 'number', name: 'string' });
+
+    const commonData = JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
+    );
+
+    res.render('movieEdit', {
+      film,
+      languages,
+      common: commonData
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error carregant el formulari d\'edició');
+  }
+});
+
+// Processar l'edició d'una pel·lícula (POST /movie/edit/:id)
+app.post('/movie/edit/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+    const { title, description, release_year, rental_rate, length, language_id } = req.body;
+
+    if (!title || !release_year || !rental_rate || !length || !language_id) {
+      return res.status(400).send('Falten camps obligatoris');
+    }
+
+    await db.query(`
+      UPDATE film
+      SET title = ?, description = ?, release_year = ?, rental_rate = ?, length = ?, language_id = ?, last_update = NOW()
+      WHERE film_id = ?
+    `, [title, description, release_year, rental_rate, length, language_id, filmId]);
+
+    res.redirect(`/movie/${filmId}`);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error en editar la pel·lícula');
+  }
+});
+
+// Eliminar una pel·lícula (POST /movie/delete/:id)
+app.post('/movie/delete/:id', async (req, res) => {
+  try {
+    const filmId = req.params.id;
+
+    // Eliminar dependències
+    await db.query('DELETE FROM film_actor WHERE film_id = ?', [filmId]);
+    await db.query('DELETE FROM film_category WHERE film_id = ?', [filmId]);
+
+    const inventories = await db.query('SELECT inventory_id FROM inventory WHERE film_id = ?', [filmId]);
+    for (let inv of inventories) {
+      await db.query('DELETE FROM rental WHERE inventory_id = ?', [inv.inventory_id]);
+    }
+    await db.query('DELETE FROM inventory WHERE film_id = ?', [filmId]);
+
+    await db.query('DELETE FROM film WHERE film_id = ?', [filmId]);
+
+    res.redirect('/movies');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error en esborrar la pel·lícula');
+  }
+});
+
+// Pàgina de detall d'una pel·lícula (GET /movie/:id) - AQUESTA VA AL FINAL
 app.get('/movie/:id', async (req, res) => {
   try {
     const filmId = req.params.id;
@@ -251,161 +384,12 @@ app.get('/movie/:id', async (req, res) => {
   }
 });
 
-// Formulari per afegir una nova pel·lícula (GET /movie/add)
-app.get('/movie/add', async (req, res) => {
-  try {
-    // Necessitem la llista d'idiomes per al selector
-    const languagesRows = await db.query('SELECT language_id, name FROM language ORDER BY name');
-    const languages = db.table_to_json(languagesRows, { language_id: 'number', name: 'string' });
-
-    const commonData = JSON.parse(
-      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
-    );
-
-    res.render('movieAdd', {
-      languages,
-      common: commonData
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error carregant el formulari');
-  }
-});
-
-// Processar el formulari d'afegir pel·lícula (POST /movie/add)
-app.post('/movie/add', async (req, res) => {
-  try {
-    const { title, description, release_year, rental_rate, length, language_id } = req.body;
-
-    // Validació bàsica
-    if (!title || !release_year || !rental_rate || !length || !language_id) {
-      return res.status(400).send('Falten camps obligatoris');
-    }
-
-    // Inserir a la taula film
-    const result = await db.query(`
-      INSERT INTO film (title, description, release_year, rental_rate, length, language_id, last_update)
-      VALUES (?, ?, ?, ?, ?, ?, NOW())
-    `, [title, description, release_year, rental_rate, length, language_id]);
-
-    // Redirigir a la llista de pel·lícules
-    res.redirect('/movies');
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error en afegir la pel·lícula');
-  }
-});
-
-// Formulari per editar una pel·lícula (GET /movie/edit/:id)
-app.get('/movie/edit/:id', async (req, res) => {
-  try {
-    const filmId = req.params.id;
-
-    // Obtenir dades de la pel·lícula
-    const filmRows = await db.query(`
-      SELECT film_id, title, description, release_year, rental_rate, length, language_id
-      FROM film
-      WHERE film_id = ?
-    `, [filmId]);
-
-    if (filmRows.length === 0) {
-      return res.status(404).send('Pel·lícula no trobada');
-    }
-
-    const film = db.table_to_json(filmRows, {
-      film_id: 'number',
-      title: 'string',
-      description: 'string',
-      release_year: 'number',
-      rental_rate: 'number',
-      length: 'number',
-      language_id: 'number'
-    })[0];
-
-    // Llista d'idiomes per al selector
-    const languagesRows = await db.query('SELECT language_id, name FROM language ORDER BY name');
-    const languages = db.table_to_json(languagesRows, { language_id: 'number', name: 'string' });
-
-    const commonData = JSON.parse(
-      fs.readFileSync(path.join(__dirname, 'data', 'common.json'), 'utf8')
-    );
-
-    res.render('movieEdit', {
-      film,
-      languages,
-      common: commonData
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error carregant el formulari d\'edició');
-  }
-});
-
-// Processar l'edició d'una pel·lícula (POST /movie/edit/:id)
-app.post('/movie/edit/:id', async (req, res) => {
-  try {
-    const filmId = req.params.id;
-    const { title, description, release_year, rental_rate, length, language_id } = req.body;
-
-    // Validació bàsica
-    if (!title || !release_year || !rental_rate || !length || !language_id) {
-      return res.status(400).send('Falten camps obligatoris');
-    }
-
-    // Actualitzar la taula film
-    await db.query(`
-      UPDATE film
-      SET title = ?, description = ?, release_year = ?, rental_rate = ?, length = ?, language_id = ?, last_update = NOW()
-      WHERE film_id = ?
-    `, [title, description, release_year, rental_rate, length, language_id, filmId]);
-
-    // Redirigir a la pàgina de detall de la pel·lícula
-    res.redirect(`/movie/${filmId}`);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error en editar la pel·lícula');
-  }
-});
-
-// Eliminar una pel·lícula (POST /movie/delete/:id)
-app.post('/movie/delete/:id', async (req, res) => {
-  try {
-    const filmId = req.params.id;
-
-    // Eliminar dependències en ordre
-    // 1. Eliminar de film_actor
-    await db.query('DELETE FROM film_actor WHERE film_id = ?', [filmId]);
-
-    // 2. Eliminar de film_category
-    await db.query('DELETE FROM film_category WHERE film_id = ?', [filmId]);
-
-    // 3. Eliminar de inventory i rental
-    const inventories = await db.query('SELECT inventory_id FROM inventory WHERE film_id = ?', [filmId]);
-    for (let inv of inventories) {
-      await db.query('DELETE FROM rental WHERE inventory_id = ?', [inv.inventory_id]);
-    }
-    await db.query('DELETE FROM inventory WHERE film_id = ?', [filmId]);
-
-    // 4. Finalment, eliminar la pel·lícula
-    await db.query('DELETE FROM film WHERE film_id = ?', [filmId]);
-
-    res.redirect('/movies');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error en esborrar la pel·lícula');
-  }
-});
-
 // Iniciar servidor
 const httpServer = app.listen(port, () => {
   console.log(`http://localhost:${port}`);
   console.log(`http://localhost:${port}/movies`);
   console.log(`http://localhost:${port}/customers`);
-  console.log(`http://localhost:${port}/movie/add`); // Nova ruta
+  console.log(`http://localhost:${port}/movie/add`);
 });
 
 // Graceful shutdown
