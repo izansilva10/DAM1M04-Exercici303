@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {{> header}}
+  <title>{{film.title}} - Sakila</title>
+</head>
+<body>
+  {{> menu}}
+
+  <main>
+    <h1>{{film.title}}</h1>
+
+    <div class="movie-detail">
+      <p><strong>Descripció:</strong> {{film.description}}</p>
+      <p><strong>Any:</strong> {{film.release_year}}</p>
+      <p><strong>Duració:</strong> {{film.length}} min</p>
+      <p><strong>Preu:</strong> {{film.rental_rate}} €</p>
+      <p><strong>Idioma:</strong> {{film.language}}</p>
+
+      <h2>Actors</h2>
+      <ul>
+        {{#each actors}}
+          <li>{{first_name}} {{last_name}}</li>
+        {{/each}}
+      </ul>
+
+      <div class="actions">
+        <a href="/movie/edit/{{film.film_id}}" class="button">Editar</a>
+        <form action="/movie/delete/{{film.film_id}}" method="POST" style="display:inline;">
+          <button type="submit" class="button button-danger" onclick="return confirm('Segur que vols esborrar aquesta pel·lícula?')">Esborrar</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  {{> footer}}
+</body>
+</html>
