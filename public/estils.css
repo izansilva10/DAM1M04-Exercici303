@@ -1,0 +1,127 @@
+body {
+    font-family: Roboto;
+    font-size: 1.1em;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #333;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+thead th {
+  background-color: #2c3e50;
+  color: #ffffff;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #dbeafe;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+nav {
+  border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  padding: 0.5rem;
+  gap: 1rem;
+}
+
+a,
+a:link,
+a:visited {
+  color: #1083e7;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+a:active {
+  color: #ffaf03;
+  text-decoration: none;
+}
+/* Añadir al final de estils.css */
+
+.movie-poster {
+  width: 150px;
+  height: 200px;
+  object-fit: cover; /* Mantiene la proporción de la imagen */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  margin-bottom: 10px;
+}
+
+.movie-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.movie-card h3 {
+  margin: 10px 0 5px 0;
+  color: #2c3e50;
+}
+
+.movie-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+/* Para la página de películas (movies.hbs) */
+.movies-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.movies-table th {
+  background-color: #2c3e50;
+  color: white;
+  padding: 0.75rem;
+}
+
+.movies-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ddd;
+  vertical-align: top;
+}
+
+.movies-table .movie-poster-small {
+  width: 60px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+/* Añadir a estils.css */
+
+.no-poster-small {
+  width: 60px;
+  height: 80px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border-radius: 4px;
+  color: #999;
+}

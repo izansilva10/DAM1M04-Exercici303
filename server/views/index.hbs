@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {{> header}}
+  <title>Pàgina principal - Sakila</title>
+</head>
+<body>
+  {{> menu}}
+
+  <main>
+    <h1>Base de dades Sakila</h1>
+
+    <section>
+      <h2>🎬 Pel·lícules (5 primeres)</h2>
+      <div class="movie-list">
+        {{#each movies}}
+          <div class="movie-card">
+            {{#if @first}}
+              <img src="/imatges/movie1.jpg" alt="{{title}}" class="movie-poster">
+            {{else}}
+              {{#if @index}}
+                {{#if (eq @index 1)}}
+                  <img src="/imatges/movie2.jpg" alt="{{title}}" class="movie-poster">
+                {{else if (eq @index 2)}}
+                  <img src="/imatges/movie3.jpg" alt="{{title}}" class="movie-poster">
+                {{else if (eq @index 3)}}
+                  <img src="/imatges/movie4.jpg" alt="{{title}}" class="movie-poster">
+                {{else}}
+                  <img src="/imatges/movie5.jpg" alt="{{title}}" class="movie-poster">
+                {{/if}}
+              {{/if}}
+            {{/if}}
+            <h3>{{title}} ({{release_year}})</h3>
+            <p><strong>Actors:</strong> {{actors}}</p>
+          </div>
+        {{/each}}
+      </div>
+    </section>
+
+    <section>
+      <h2>📂 Categories (5 primeres)</h2>
+      <ul>
+        {{#each categories}}
+          <li>{{name}}</li>
+        {{/each}}
+      </ul>
+    </section>
+  </main>
+
+  {{> footer}}
+</body>
+</html>

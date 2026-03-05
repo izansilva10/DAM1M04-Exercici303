@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {{> header}}
+  <title>Clients - Sakila</title>
+</head>
+<body>
+  {{> menu}}
+
+  <main>
+    <h1>Llistat de clients (25 primers) amb els seus darrers lloguers</h1>
+
+    {{#each customers}}
+    <div style="border:1px solid #ccc; margin-bottom:1rem; padding:1rem;">
+      <h3>{{first_name}} {{last_name}} ({{email}})</h3>
+      <h4>Últims 5 lloguers:</h4>
+      {{#if rentals.length}}
+      <ul>
+        {{#each rentals}}
+        <li>{{title}} - {{rental_date}}</li>
+        {{/each}}
+      </ul>
+      {{else}}
+      <p>No té lloguers</p>
+      {{/if}}
+    </div>
+    {{/each}}
+  </main>
+
+  {{> footer}}
+</body>
+</html>

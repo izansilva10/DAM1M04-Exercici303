@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {{> header}}
+  <title>Pel·lícules - Sakila</title>
+</head>
+<body>
+  {{> menu}}
+
+  <main>
+    <h1>Llistat de pel·lícules (15 primeres)</h1>
+
+    <table class="movies-table">
+      <thead>
+        <tr>
+          <th>Caràtula</th>
+          <th>Títol</th>
+          <th>Any</th>
+          <th>Duració</th>
+          <th>Preu</th>
+          <th>Actors</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each movies}}
+        <tr>
+          <td>
+            {{#if (eq @index 0)}}
+              <img src="/imatges/movie1.jpg" alt="{{title}}" class="movie-poster-small">
+            {{else if (eq @index 1)}}
+              <img src="/imatges/movie2.jpg" alt="{{title}}" class="movie-poster-small">
+            {{else if (eq @index 2)}}
+              <img src="/imatges/movie3.jpg" alt="{{title}}" class="movie-poster-small">
+            {{else if (eq @index 3)}}
+              <img src="/imatges/movie4.jpg" alt="{{title}}" class="movie-poster-small">
+            {{else if (eq @index 4)}}
+              <img src="/imatges/movie5.jpg" alt="{{title}}" class="movie-poster-small">
+            {{else}}
+              <div class="no-poster-small">🎬</div>
+            {{/if}}
+          </td>
+          <td><strong>{{title}}</strong></td>
+          <td>{{release_year}}</td>
+          <td>{{length}} min</td>
+          <td>{{rental_rate}} €</td>
+          <td>{{actors}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </main>
+
+  {{> footer}}
+</body>
+</html>
