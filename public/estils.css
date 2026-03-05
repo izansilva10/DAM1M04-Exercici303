@@ -1,10 +1,14 @@
 body {
     font-family: Roboto;
     font-size: 1.1em;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
 }
 
 table {
   border-collapse: collapse;
+  width: 100%;
 }
 
 th, td {
@@ -29,6 +33,7 @@ tbody tr:nth-child(odd) {
 nav {
   border-top: 1px solid #aaa;
   border-bottom: 1px solid #aaa;
+  background-color: #f8f9fa;
 }
 
 nav ul {
@@ -36,6 +41,7 @@ nav ul {
   list-style: none;
   padding: 0.5rem;
   gap: 1rem;
+  margin: 0;
 }
 
 a,
@@ -54,44 +60,75 @@ a:active {
   color: #ffaf03;
   text-decoration: none;
 }
-/* Añadir al final de estils.css */
 
-.movie-poster {
-  width: 150px;
-  height: 200px;
-  object-fit: cover; /* Mantiene la proporción de la imagen */
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  margin-bottom: 10px;
+/* Estils per a botons */
+.button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #2c3e50;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  transition: background-color 0.3s;
 }
 
-.movie-card {
+.button-danger {
+  background-color: #c0392b;
+}
+
+.button:hover {
+  background-color: #34495e;
+}
+
+.button-danger:hover {
+  background-color: #e74c3c;
+}
+
+/* Estils per a la pàgina de detall de pel·lícula */
+.movie-detail {
+  background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 1rem;
-  background-color: #f9f9f9;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.movie-detail h2 {
+  margin-top: 1.5rem;
+  border-bottom: 2px solid #2c3e50;
+  padding-bottom: 0.5rem;
+}
+
+.movie-detail ul {
+  list-style: none;
+  padding: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.movie-card h3 {
-  margin: 10px 0 5px 0;
-  color: #2c3e50;
+.movie-detail ul li {
+  background-color: #ecf0f1;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
 }
 
-.movie-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin: 1rem 0;
+.actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
 }
 
-/* Para la página de películas (movies.hbs) */
+/* Estils per a la pàgina de llistat de pel·lícules */
 .movies-table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1rem;
 }
 
 .movies-table th {
@@ -103,16 +140,17 @@ a:active {
 .movies-table td {
   padding: 0.75rem;
   border-bottom: 1px solid #ddd;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
-.movies-table .movie-poster-small {
+.movie-poster-small {
   width: 60px;
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-/
+
 .no-poster-small {
   width: 60px;
   height: 80px;
@@ -125,6 +163,7 @@ a:active {
   color: #999;
 }
 
+/* Estils per als formularis */
 .movie-form {
   max-width: 600px;
   margin: 2rem auto;
@@ -132,6 +171,7 @@ a:active {
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .form-group {
@@ -142,6 +182,7 @@ a:active {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
+  color: #2c3e50;
 }
 
 .form-group input,
@@ -152,14 +193,69 @@ a:active {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .form-group textarea {
   resize: vertical;
+  min-height: 100px;
 }
 
 .form-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+/* Estils per a la pàgina principal */
+.movie-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.movie-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.movie-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.movie-card h3 {
+  margin: 10px 0 5px 0;
+  color: #2c3e50;
+}
+
+.movie-poster {
+  width: 150px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  margin-bottom: 10px;
+}
+
+/* Peu de pàgina */
+footer {
+  text-align: center;
+  padding: 1rem;
+  background-color: #2c3e50;
+  color: white;
+  margin-top: 2rem;
+}
+
+footer p {
+  margin: 0;
 }
