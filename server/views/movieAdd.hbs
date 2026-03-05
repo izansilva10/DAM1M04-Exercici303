@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {{> header}}
+  <title>Afegir pel·lícula - Sakila</title>
+</head>
+<body>
+  {{> menu}}
+
+  <main>
+    <h1>Afegir nova pel·lícula</h1>
+
+    <form action="/movie/add" method="POST" class="movie-form">
+      <div class="form-group">
+        <label for="title">Títol:</label>
+        <input type="text" id="title" name="title" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Descripció:</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="release_year">Any:</label>
+        <input type="number" id="release_year" name="release_year" min="1900" max="2030" required>
+      </div>
+
+      <div class="form-group">
+        <label for="length">Duració (minuts):</label>
+        <input type="number" id="length" name="length" min="1" required>
+      </div>
+
+      <div class="form-group">
+        <label for="rental_rate">Preu lloguer (€):</label>
+        <input type="number" id="rental_rate" name="rental_rate" step="0.01" min="0" required>
+      </div>
+
+      <div class="form-group">
+        <label for="language_id">Idioma:</label>
+        <select id="language_id" name="language_id" required>
+          <option value="">Selecciona un idioma</option>
+          {{#each languages}}
+            <option value="{{language_id}}">{{name}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button">Afegir pel·lícula</button>
+        <a href="/movies" class="button">Cancel·lar</a>
+      </div>
+    </form>
+  </main>
+
+  {{> footer}}
+</body>
+</html>
